@@ -1,0 +1,731 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traklist - Catálogo de Películas y Series</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box; /* El padding y border se incluyen en el ancho total */
+          }
+     body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente moderna y legible */
+            background: #000000; /* Fondo negro estilo Netflix */
+            color: white; /* Texto blanco para contraste */
+            min-height: 100vh; /* Altura mínima de toda la pantalla */
+           }
+        .header {
+            background: #000000; /* Fondo negro */
+            border-bottom: 1px solid #333; /* Línea separadora sutil */
+            padding: 15px 30px; /* Espaciado interno */
+            display: flex; /* Layout flexible horizontal */
+            justify-content: space-between; /* Elementos separados a los extremos */
+            align-items: center; /* Alineación vertical centrada */
+            position: sticky; /* Se mantiene fijo al hacer scroll */
+            top: 0; /* Pegado al top */
+            z-index: 100; /* Por encima de otros elementos */
+        }
+        .left-nav {
+            display: flex;
+            align-items: center;
+            gap: 60px; /* Espaciado entre elementos */
+        }
+        .logo {
+            font-size: 2.5rem; /* Tamaño grande para destacar */
+            font-weight: bold; /* Texto en negrita */
+            color: white;
+            letter-spacing: 2px; /* Espaciado entre letras para efecto moderno */
+        }
+        .nav-items {
+            display: flex;
+            gap: 30px; /* Espaciado entre botones */
+            align-items: center;
+        }
+        .nav-btn {
+            background: none; /* Sin fondo */
+            border: none; /* Sin bordes */
+            color: #ccc; /* Color gris claro */
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer; /* Cambia cursor al pasar por encima */
+            padding: 8px 0;
+            position: relative; /* Para poder agregar elementos posicionados */
+            transition: color 0.3s ease; /* Transición suave del color */
+        }
+        .nav-btn:hover,
+        .nav-btn.active {
+            color: white; /* Cambia a blanco al pasar el mouse o estar activo */
+        }
+        .nav-btn.active::after {
+            content: ''; /* Elemento pseudo vacío */
+            position: absolute;
+            bottom: -1.5px; /* Posicionado debajo del botón */
+            left: 0;
+            right: 0;
+            height: 3px; /* Altura de la línea */
+            background: #2d256d; /* Color rojo Netflix */
+        }
+        .right-nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .search-input {
+            background: #333; /* Fondo gris oscuro */
+            border: 1px solid #555; /* Borde gris */
+            border-radius: 4px; /* Esquinas redondeadas */
+            padding: 8px 12px;
+            color: white;
+            font-size: 0.9rem;
+            width: 250px;
+        }
+        .search-input::placeholder {
+            color: #999; /* Color gris claro para el texto de ayuda */
+        }
+        .search-btn {
+            background: #2d256d; /* Color rojo Netflix */
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .config-icon {
+            color: #ccc;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 8px;
+            transition: color 0.3s ease;
+        }
+        .dropdown {
+            position: relative; /* Para posicionar el menú desplegable */
+        }
+        .dropdown-content {
+            display: none; /* Oculto por defecto */
+            position: absolute; /* Posicionado respecto al contenedor padre */
+            top: calc(100% + 20px); /* Debajo del botón con margen */
+            left: 0;
+            background: #1a1a1a; /* Fondo oscuro */
+            min-width: 200px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); /* Sombra para profundidad */
+            z-index: 1000; /* Por encima de otros elementos */
+            border: 1px solid #333;
+        }
+        .dropdown.active .dropdown-content {
+            display: block;
+        }
+        .dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.6s ease;
+            color: #ccc;
+            border-bottom: 0.5px solid #333; /* Separador entre elementos */
+        }
+        .dropdown-item:last-child {
+            border-bottom: none; /* Sin borde en el último elemento */
+        }
+        .dropdown-item:hover {
+            background: #333; /* Fondo más claro al pasar el mouse */
+            color: white;
+        }
+        .main-content {
+            padding: 20px 20px; /* Espaciado interior */
+        }
+        .section-title {
+            color: #2d256d; /* Color */
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /*Columnas automáticas mínimo 200px*/
+            gap: 30px; /* Espaciado entre elementos */
+            max-width: 1400px; /* Ancho máximo */
+            margin: 0 auto; /* Centrado horizontal */
+        }
+        .movie-card {
+            position: relative; /* Para posicionar elementos internos */
+            cursor: pointer;
+            transition: all 0.2s ease; /* Transición suave para efectos */
+            border-radius: 8px;
+            overflow: hidden; /* Oculta contenido que se desborde */
+        }
+        .movie-card:hover {
+            transform: scale(1.07); /* Agranda ligeramente la tarjeta */
+            z-index: 10; /* Se coloca por encima de otras tarjetas */
+        }
+        .movie-poster {
+            width: 100%;
+            height: 300px;
+            background-size: cover; /* La imagen cubre todo el área */
+            background-position: center; /* Imagen centrada */
+            background-repeat: no-repeat; /* Sin repetición */
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .genre-tag {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase; /* Texto en mayúsculas */
+            letter-spacing: 0.5px; /* Espaciado entre letras */
+        }
+        .genre-accion { background: #ff4444; } /* Rojo para acción */
+        .genre-fantasia { background: #9c27b0; } /* Púrpura para fantasía */
+        .genre-drama { background: #ff9800; } /* Naranja para drama */
+        .genre-animacion { background: #4caf50; } /* Verde para animación */
+        .genre-terror { background: #000000; border: 1px solid #666; } /* Negro para terror */
+        .genre-comedia { background: #ffeb3b; color: #000; } /* Amarillo para comedia */
+        .genre-superheroes { background: #2196f3; } /* Azul para superhéroes */
+        .movie-title {
+            position: absolute;
+            bottom: 0; /* En la parte inferior */
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9)); /* Gradiente para legibilidad */
+            padding: 20px 10px 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .hover-details {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95); /* Fondo casi negro */
+            color: white;
+            padding: 20px;
+            opacity: 0; /* Invisible por defecto */
+            transform: translateY(20px); /* Desplazado hacia abajo */
+            transition: all 0.64s ease; /* Transición suave */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .movie-card:hover .hover-details {
+            opacity: 0.87; /* Visible */
+            transform: translateY(0); /* Posición normal */
+        }
+        .hover-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #e50914; /* Color rojo Netflix */
+        }
+        .hover-year {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #ccc;
+        }
+        .hover-actors {
+            margin-bottom: 15px;
+            line-height: 1.4; /* Espaciado entre líneas */
+            font-size: 0.85rem;
+        }
+        .hover-type {
+            background: #e50914;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            align-self: center; /* Centrado horizontalmente */
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .modal {
+            display: none; /* Oculto por defecto */
+            position: fixed; /* Fijo en la pantalla */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8); /* Fondo semi-transparente */
+            z-index: 2000; /* Por encima de todo */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex; /* Se muestra cuando tiene clase active */
+        }
+        .modal-content {
+            background: #1a1a1a; /* Fondo oscuro */
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh; /* Máximo 80% de la altura de pantalla */
+            overflow-y: auto; /* Scroll vertical si es necesario */
+            border: 1px solid #333;
+        }
+        .modal-title {
+            color: #2d256d;
+            font-size: 1.7rem;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .form-group {
+            margin-bottom: 20px; /* Espaciado entre campos */
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-weight: 500;
+        }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: #333;
+            color: white;
+            font-size: 1rem;
+        }
+        .form-input:focus, .form-select:focus {
+            border-color: #e50914; /* Borde rojo al enfocar */
+            outline: none; /* Quita el outline por defecto */
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #e50914;
+            color: white;
+        }
+        .btn-secondary {
+            background: #555;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8; 
+        }
+        .hidden {
+            display: none !important; /* !important para forzar ocultación */
+        }
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column; /* Apila elementos verticalmente */
+                gap: 15px;
+                padding: 15px;
+            }
+            .left-nav {
+                flex-direction: column;
+                gap: 20px;
+                align-items: center;
+            }
+            .nav-items {
+                gap: 20px;
+            }
+            .search-input {
+                width: 200px; /* Campo de búsqueda más pequeño */
+            }
+            .movies-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Columnas más pequeñas */
+                gap: 15px;
+                padding: 0 10px;
+            }
+
+            .main-content {
+                padding: 20px 15px;
+            }
+
+            .movie-poster {
+                height: 225px; /* Altura reducida para móviles */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="left-nav">
+            <div class="logo">TRAKLIST</div>
+            <nav class="nav-items">
+                <button class="nav-btn" data-filter="pelicula">PELÍCULAS</button>
+                <button class="nav-btn" data-filter="serie">SERIES</button>
+                <div class="dropdown">
+                    <button class="nav-btn" id="genreBtn">GÉNEROS</button>
+                    <div class="dropdown-content" id="genreDropdown">
+                        <div class="dropdown-item" data-genre="drama">Drama</div>
+                        <div class="dropdown-item" data-genre="accion">Acción</div>
+                        <div class="dropdown-item" data-genre="superheroes">Superhéroes</div>
+                        <div class="dropdown-item" data-genre="comedia">Comedia</div>
+                        <div class="dropdown-item" data-genre="terror">Terror</div>
+                        <div class="dropdown-item" data-genre="animacion">Animación</div>
+                        <div class="dropdown-item" data-genre="fantasia">Fantasía</div>
+                        <div class="dropdown-item" data-genre="todos">Todos</div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        <div class="right-nav">
+            <div class="search-container">
+                <!-- Campo de búsqueda -->
+                <input type="text" class="search-input" placeholder="Buscar películas y series..." id="searchInput">
+                <!-- Botón de búsqueda -->
+                <button class="search-btn" id="searchBtn">Buscar</button>
+            </div>
+    </header>
+    <main class="main-content">
+        <h1 class="section-title" id="sectionTitle">Películas</h1>
+        <div class="movies-grid" id="moviesGrid">
+        </div>
+    </main>
+    <script>
+let movies = [   
+{ id: 1, title: "La Monja", fullTitle: "La Monja", 
+genre: "terror", year: 2018, 
+actors: ["Taissa Farmiga", "Demián Bichir", "Jonas Bloquet"], 
+type: "pelicula", 
+trailer: "https://youtu.be/MY_MPRu_OC4?si=s6DH-EGicpdxi5ZW", 
+poster: "https://image.tmdb.org/t/p/w500/sFC1ElvoKGdHJIWRpNB3xWJ9lJA.jpg"//enlace de postimg.cc 
+},  
+{ id: 2, title: "Atomic Blonde", fullTitle: "Atomic Blonde", 
+genre: "accion", year: 2017, 
+actors: ["Charlize Theron", "James McAvoy", "John Goodman"], 
+type: "pelicula", 
+trailer: "https://youtu.be/9DPkIthjO98?si=qzNqlnGsSFm01kbQ ", 
+poster: "https://image.tmdb.org/t/p/w500/kV9R5h0Yct1kR8Hf8sJ1nX0Vz4x.jpg" 
+},                      
+{ id: 3, title: "Megan", fullTitle: "M3GAN", 
+genre: "terror", year: 2022, 
+actors: ["Allison Williams", "Violet McGraw", "Ronny Chieng"], 
+type: "pelicula", 
+trailer: "https://youtu.be/QVqB6YtMZ6o?si=E33Cp7593IGc4b1H", 
+poster: "https://image.tmdb.org/t/p/w500/d9nBoowhjiiYc4FBNtQkPY7c11H.jpg" 
+},  
+{ id: 4, title: "Sonríe", fullTitle: "Smile", 
+genre: "terror", year: 2022, 
+actors: ["Sosie Bacon", "Jessie T. Usher", "Kyle Gallner"], 
+type: "pelicula", 
+trailer: "https://youtu.be/yhKiQGJop_8?si=GwmAEiUtoCCWxlrQ", 
+poster: "https://image.tmdb.org/t/p/w500/aPqcQwu4VGEewPhagWNncDbJ9Xp.jpg" 
+},    
+{ id: 5, title: "Uncharted", fullTitle: "Uncharted", 
+genre: "accion", year: 2022, 
+actors: ["Tom Holland", "Mark Wahlberg", "Antonio Banderas"], 
+type: "pelicula", trailer: "https://www.youtube.com/watch?v=eHp3MbsCbMg", 
+poster: "https://image.tmdb.org/t/p/w500/tlZpSxYuBRoVJBOpUrPdQe9FmFq.jpg" 
+},   
+{ id: 6, title: "El Conjuro", fullTitle: "Expediente Warren: El Conjuro", 
+genre: "terror", year: 2013, 
+actors: ["Patrick Wilson", "Vera Farmiga", "Lili Taylor"], 
+type: "pelicula", 
+trailer: "https://youtu.be/1kOlrEwTfco?si=zEhdi27FTYe7FOMb", 
+poster: "https://image.tmdb.org/t/p/w500/wVYREutTvI2tmxr6ujrHT704wGF.jpg" 
+},
+{ id: 7, title: "Spider-Man", fullTitle: "Spider-Man: No Way Home",
+genre: "superheroes", year: 2021,
+actors: ["Tom Holland", "Zendaya", "Benedict Cumberbatch", "Jacob Batalon"],
+type: "pelicula",
+trailer: "https://www.youtube.com/watch?v=JfVOs4VSpmA",
+poster: "https://m.media-amazon.com/images/M/MV5BZWMyYzFjYTYtNTRjYi00OGExLWE2YzgtOGRmYjAxZTU3NzBiXkEyXkFqcGdeQXVyMzQ0MzA0NTM@._V1_SX300.jpg"
+},
+{ id: 8, title: "Voces", fullTitle: "The Voices",
+genre: "terror", year: 2014,
+actors: ["Ryan Reynolds", "Gemma Arterton", "Anna Kendrick", "Jacki Weaver"],
+type: "pelicula",
+trailer: "https://www.youtube.com/watch?v=Fs9vP8Cz3uk",
+poster: "https://i.postimg.cc/5yhkR6Bb/voces-pelicula-cartel-561x800-jpg.webp"
+},
+{ id: 9, title: "Insidious: La Puerta Roja", fullTitle: "Insidious: The Red Door", 
+genre: "terror", year: 2023, 
+actors: ["Patrick Wilson", "Rose Byrne", "Ty Simpkins"], 
+type: "pelicula", 
+trailer: "https://youtu.be/gp4Z6bZ5tVU?si=f59w9YCKGApAhI2G", 
+poster: "https://image.tmdb.org/t/p/w500/d07phJqCx6z5wILDYqkyraorDPi.jpg" 
+},
+{ id: 10, title: "Feliz Día de tu Muerte 1", fullTitle: "Happy Death Day", 
+genre: "terror", year: 2017, 
+actors: ["Jessica Rothe", "Israel Broussard", "Ruby Modine"], 
+type: "pelicula", 
+trailer: "https://youtu.be/eZicXnGtdWU?si=cxZsDYvjhTt-iAXd", 
+poster: "https://image.tmdb.org/t/p/w500/cTaEIUYTt52ooq9quVbAQ7NpGwo.jpg" 
+},  
+{ id: 11, title: "Black Phone", fullTitle: "The Black Phone", 
+genre: "terror", year: 2021, 
+actors: ["Mason Thames", "Madeleine McGraw", "Ethan Hawke"], 
+type: "pelicula", 
+trailer: "https://youtu.be/XhcEnHDKHco?si=gpaLejVx0eCYsY7j", 
+poster: "https://image.tmdb.org/t/p/w500/lr11mCT85T1JanlgjMuhs9nMht4.jpg" 
+},
+{ id: 12, title: "It", fullTitle: "It", 
+genre: "terror", year: 2017, 
+actors: ["Bill Skarsgård", "Jaeden Martell", "Finn Wolfhard"], 
+type: "pelicula", 
+trailer: "https://youtu.be/_oBZ_zTz0Nw?si=kPFkdRatXPcy1vAe", 
+poster: "https://image.tmdb.org/t/p/w500/9E2y5Q7WlCVNEhP5GiVTjhEhx1o.jpg" 
+},
+{ id: 13, title: "Llaman a la Puerta", fullTitle: "Knock at the Cabin", 
+genre: "terror", year: 2023, 
+actors: ["Dave Bautista", "Jonathan Groff", "Ben Aldridge"], 
+type: "pelicula", 
+trailer: "https://youtu.be/2WLz2b0Namw?si=IhWR7W8ExxH7IyDs", 
+poster: "https://image.tmdb.org/t/p/w500/dm06L9pxDOL9jNSK4Cb6y139rrG.jpg" 
+},
+{ id: 14, title: "X-Men: Primera Generación", fullTitle: "X-Men: First Class", 
+genre: "superheroes", year: 2011, 
+actors: ["James McAvoy", "Michael Fassbender", "Jennifer Lawrence"], 
+type: "pelicula", 
+trailer: "https://youtu.be/gEk93k7qOhU?si=65WxF0FLCx6HEDKb", 
+poster: "https://image.tmdb.org/t/p/w500/hNEokmUke0dazoBhttFN0o3L7Xv.jpg" 
+},  
+{ id: 15, title: "Alita: Ángel de Combate", fullTitle: "Alita: Battle Angel", 
+genre: "fantasia", year: 2019, 
+actors: ["Rosa Salazar", "Christoph Waltz", "Jennifer Connelly"], 
+type: "pelicula", 
+trailer: "https://youtu.be/fjq0YVIvCo4?si=-R-1wXVIr5-UgNjS", 
+poster: "https://image.tmdb.org/t/p/w500/xRWht48C2V8XNfzvPehyClOvDni.jpg" 
+},
+{ id: 16, title: "La Torre Oscura", fullTitle: "The Dark Tower", 
+genre: "accion", year: 2017, 
+actors: ["Idris Elba", "Matthew McConaughey", "Tom Taylor"], 
+type: "pelicula", 
+trailer: "https://youtu.be/GjwfqXTebIY", 
+poster: "https://image.tmdb.org/t/p/w500/i9GUSgddIqrroubiLsvvMRYyRy0.jpg" 
+},
+{ id: 17, title: "Madame Web", fullTitle: "Madame Web", 
+genre: "superheroes", year: 2024, 
+actors: ["Dakota Johnson", "Sydney Sweeney", "Celeste O'Connor"], 
+type: "pelicula", 
+trailer: "https://youtu.be/plv6ppDBGCk?si=Ksqz6X8NAT0jblCx", 
+poster: "https://image.tmdb.org/t/p/w500/rULWuutDcN5NvtiZi4FRPzRYWSh.jpg" 
+},  
+{ id: 18, title: "Hellboy", fullTitle: "Hellboy", 
+genre: "accion", year: 2019, 
+actors: ["David Harbour", "Milla Jovovich", "Ian McShane"], 
+type: "pelicula", 
+trailer: "https://youtu.be/-y41bDJa32w?si=yFbOciTowhphXcRs", 
+poster: "https://image.tmdb.org/t/p/w500/bk8LyaMqUtaQ9hUShuvFznQYQKR.jpg" 
+},  
+{ id: 19, title: "Atlas", fullTitle: " El Atlas de las nubes", 
+genre: "accion", year: 2024, 
+actors: ["Jennifer Lopez", "Simu Liu", "Sterling K. Brown"], 
+type: "pelicula", 
+trailer: "https://youtu.be/QUkkBrxy1k0?si=Eqco9BsklJJvItWK", 
+poster: "https://image.tmdb.org/t/p/w500/bcM2Tl5HlsvPBnL8DKP9Ie6vU4r.jpg" 
+},
+{ id: 20, title: "Black Panther: Wakanda Forever", fullTitle: "Black Panther: Wakanda Forever", 
+genre: "superheroes", year: 2022, 
+actors: ["Letitia Wright", "Lupita Nyong'o", "Danai Gurira"], 
+type: "pelicula", 
+trailer: "https://youtu.be/Sog5AgxPwu0?si=wdQb7cpcoKmIoVJm", 
+poster: "https://image.tmdb.org/t/p/w500/sv1xJUazXeYqALzczSZ3O6nkH75.jpg" 
+},
+{ id: 21, title: "Capitán América: El Primer Vengador", fullTitle: "Captain America: The First Avenger", 
+genre: "superheroes", year: 2011, 
+actors: ["Chris Evans", "Hayley Atwell", "Sebastian Stan"], 
+type: "pelicula", 
+trailer: "https://youtu.be/YqEJ0jpFvSU?si=lpwxn4jPL6jCVatj", 
+poster: "https://image.tmdb.org/t/p/w500/vSNxAJTlD0r02V9sPYpOjqDZXUK.jpg" 
+},
+{ id: 22, title: "Los Juegos del Hambre", fullTitle: "The Hunger Games", 
+genre: "fantasia", year: 2012, 
+actors: ["Jennifer Lawrence", "Josh Hutcherson", "Liam Hemsworth"], 
+type: "pelicula", 
+trailer: "https://youtu.be/_8Ktfs2mBDY?si=GH2VUnMAx-MKyC6Q", 
+poster: "https://image.tmdb.org/t/p/w500/yXCbOiVDCxO71zI7cuwBRXdftq8.jpg" 
+},
+{ id: 23, title: "Creed II", fullTitle: "Creed 2", 
+genre: "accion", year: 2018, 
+actors: ["Michael B. Jordan", "Sylvester Stallone", "Tessa Thompson"], 
+type: "pelicula", 
+trailer: "https://youtu.be/klYuSuUCiJI?si=oEnzf7CEdyVYm1I1", 
+poster: "https://image.tmdb.org/t/p/w500/v3QyboWRoA4O9RbcsqH8tJMe8EB.jpg" 
+},
+{ id: 24, title: "Creed III", fullTitle: "Creed 3", 
+genre: "accion", year: 2023, 
+actors: ["Michael B. Jordan", "Tessa Thompson", "Jonathan Majors"], 
+type: "pelicula", 
+trailer: "https://youtu.be/IeZ5xDv3w6A?si=4Uw5z9S7N0EbjRzy", 
+poster: "https://image.tmdb.org/t/p/w500/cvsXj3I9Q2iyyIo95AecSd1tad7.jpg" 
+}, 
+{ id: 25, title: "The Boys", fullTitle: "The Boys", 
+genre: "superheroes", year: 2019, 
+actors: ["Karl Urban", "Jack Quaid", "Antony Starr"], 
+type: "serie", 
+trailer: "https://youtu.be/AD0qUhZpbfc?si=D0J_wQRQV_C9rNTe", 
+poster: "https://image.tmdb.org/t/p/w500/stTEycfG9928HYGEISBFaG1ngjM.jpg" 
+},
+{ id: 26, title: "Agentes de Shield", fullTitle: "Agents of S.H.I.E.L.D.", 
+genre: "superheroes", year: 2013, 
+actors: ["Clark Gregg", "Ming-Na Wen", "Brett Dalton"], 
+type: "serie", 
+trailer: "https://youtu.be/rd-d7Qt3itc?si=ehxmYMtGC05nUex8", 
+poster: "https://image.tmdb.org/t/p/w500/gHUCCMy1vvj58tzE3dZqeC9SXus.jpg" 
+},
+{ id: 27, title: "Fallout", fullTitle: "Fallout", 
+genre: "fantasia", year: 2024, 
+actors: ["Ella Purnell", "Aaron Moten", "Walton Goggins"], 
+type: "serie", 
+trailer: "https://youtu.be/SErNZJumbak?si=lya5PIybLZlASUPl", 
+poster: "https://image.tmdb.org/t/p/w500/AnsSKR9LuK0T9bAOcPVA3PUvyWj.jpg" 
+}, 
+{ id: 28, title: "Interstellar", fullTitle: "Interstellar", 
+genre: "fantasia", year: 2014, 
+actors: ["Matthew McConaughey", "Anne Hathaway", "Jessica Chastain"], 
+type: "pelicula", 
+trailer: "https://youtu.be/UoSSbmD9vqc?si=zMM-3Am9Up_DUozc", 
+poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" 
+},
+{ id: 35, title: "Damsel", fullTitle: "Damsel", 
+genre: "fantasia", year: 2024, 
+actors: ["Millie Bobby Brown", "Ray Winstone", "Angela Bassett"], 
+type: "pelicula", 
+trailer: "https://youtu.be/VrdRyYPggfI?si=iWBXxbunz59mUwCn", 
+poster: "https://image.tmdb.org/t/p/w500/AgHbB9DCE9aE57zkHjSmseszh6e.jpg" 
+},
+{ id: 36, title: "Shaft", fullTitle: "Shaft", 
+genre: "accion", year: 2019, 
+actors: ["Samuel L. Jackson", "Jessie T. Usher", "Regina Hall"], 
+type: "pelicula", 
+trailer: "https://youtu.be/qNGDVOgTt_A?si=APIp2V1OJ4i7d1KD", 
+poster: "https://image.tmdb.org/t/p/w500/kfZqwGuvEBAysAbCsa0QLKoSYR.jpg" 
+},
+{ id: 37, title: "Dune", fullTitle: "Dune", 
+genre: "fantasia", year: 2021, 
+actors: ["Timothée Chalamet", "Rebecca Ferguson", "Oscar Isaac"], 
+type: "pelicula", 
+trailer: "https://youtu.be/mSY_NbSmaUI?si=-uv6q4fy7yD85cx2", 
+poster: "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg" 
+},
+];
+        let currentFilter = 'pelicula';
+        let currentGenre = 'todos';
+        let searchTerm = '';
+        const moviesGrid = document.getElementById('moviesGrid');
+        const filterBtns = document.querySelectorAll('[data-filter]');
+        const genreBtn = document.getElementById('genreBtn');
+        const genreDropdown = document.getElementById('genreDropdown');
+        const genreItems = document.querySelectorAll('[data-genre]');
+        const configBtn = document.getElementById('configBtn');
+        const configModal = document.getElementById('configModal');
+        const configForm = document.getElementById('configForm');
+        const saveBtn = document.getElementById('saveBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const sectionTitle = document.getElementById('sectionTitle');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        function renderMovies() {
+            const filteredMovies = movies.filter(movie => {
+                const typeMatch = currentFilter === 'all' || movie.type === currentFilter;
+                const genreMatch = currentGenre === 'todos' || movie.genre === currentGenre;
+                const searchMatch = searchTerm === '' || 
+                    movie.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    movie.fullTitle.toLowerCase().includes(searchTerm.toLowerCase());
+                return typeMatch && genreMatch && searchMatch;
+            });
+            moviesGrid.innerHTML = filteredMovies.map(movie => `
+                <div class="movie-card" onclick="openTrailer('${movie.trailer}')">
+                    <!-- Poster de la película con imagen de fondo -->
+                    <div class="movie-poster" style="background-image: url('${movie.poster}')">
+                        <!-- Etiqueta del género con clase CSS dinámica -->
+                        <div class="genre-tag genre-${movie.genre}">${capitalizeGenre(movie.genre)}</div>
+                        <!-- Título corto de la película -->
+                        <div class="movie-title">${movie.title}</div>
+                    </div>
+                    <!-- Detalles que aparecen al hacer hover -->
+                    <div class="hover-details">
+                        <div class="hover-title">${movie.fullTitle || movie.title}</div>
+                        <div class="hover-year">Año: ${movie.year}</div>
+                        <div class="hover-actors">
+                            <strong>Actores principales:</strong><br>
+                            ${movie.actors.join(', ')}
+                        </div>
+                        <div class="hover-type">${movie.type === 'pelicula' ? 'Película' : 'Serie'}</div>
+                    </div>
+                </div>
+            `).join('');
+            if (currentFilter === 'pelicula') {
+                sectionTitle.textContent = 'Películas';
+            } else if (currentFilter === 'serie') {
+                sectionTitle.textContent = 'Series';
+            } else {
+                sectionTitle.textContent = 'Todo el contenido';
+            }
+        }
+        function capitalizeGenre(genre) {
+            const genres = {
+                'drama': 'Drama',
+                'accion': 'Acción',
+                'superheroes': 'Superhéroes',
+                'comedia': 'Comedia',
+                'terror': 'Terror',
+                'animacion': 'Animación',
+                'fantasia': 'Fantasía'
+            };
+            return genres[genre] || genre;
+        }
+        function openTrailer(url) {
+            if (url) {
+                window.open(url, '_blank');
+            }
+        }
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.getAttribute('data-filter');
+                renderMovies();
+            });
+        });
+        genreBtn.addEventListener('click', () => {
+ genreDropdown.parentElement.classList.toggle('active');
+        });
+        genreItems.forEach(item => {
+            item.addEventListener('click', () => {
+                currentGenre = item.getAttribute('data-genre');
+  genreDropdown.parentElement.classList.remove('active');
+                renderMovies();
+            });
+        });
+        searchBtn.addEventListener('click', () => {
+            searchTerm = searchInput.value;
+            renderMovies();
+        });
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchTerm = searchInput.value;
+                renderMovies();
+            }
+        });
+        document.addEventListener('click', (e) => {
+            if (!genreBtn.contains(e.target) && !genreDropdown.contains(e.target)) {                
+              genreDropdown.parentElement.classList.remove('active');
+            }
+        });
+        document.querySelector('[data-filter="pelicula"]').classList.add('active');
+        renderMovies();
+    </script>
+</body>
+</html>
